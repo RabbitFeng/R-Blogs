@@ -46,7 +46,7 @@ adb logcat -v time -s FA FA-SVC
 
 
 
-
+[Android Developers命令行工具](https://developer.android.com/tools/adb?hl=zh-cn#shellcommands)
 
 
 

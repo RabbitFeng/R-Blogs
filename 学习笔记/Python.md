@@ -2,7 +2,15 @@
 
 [Python 魔法函数](https://zhuanlan.zhihu.com/p/344951719)
 
+[Python标准库](https://docs.python.org/zh-cn/3.7/library/index.html)
+
 [定义函数](https://docs.python.org/zh-cn/3/tutorial/controlflow.html#defining-functions)
+
+
+
+[Python输出颜色](https://blog.csdn.net/weixin_45694843/article/details/124222543)
+
+[Python输出颜色](https://www.cnblogs.com/huchong/p/7516712.html)
 
 # 1. 基础
 
@@ -94,7 +102,48 @@ for i in range(len(sys.argv)):
 
 
 
+# 标准库
 
+[标准库 time](https://docs.python.org/zh-cn/3.7/library/time.html)
+
+
+
+Dic迭代器：
+
+```python
+# YalogType对应的匹配字符串
+MATCH_DIC = {
+    YalogType.OSF: '"type":"osf","ext":{"fid":"',
+    YalogType.CF: '"type":"cf","ext":{"fid":"'
+}
+
+for i, e in enumerate(MATCH_DIC.items()):
+    print(f'{i}:{e}')
+# 0:(<YalogType.OSF: ('osf',)>, '"type":"osf","ext":{"fid":"')
+# 1:(<YalogType.CF: 2>, '"type":"cf","ext":{"fid":"')
+
+for i, e in enumerate(MATCH_DIC):
+    print(f'{i}:{e}')
+# 0:YalogType.OSF
+# 1:YalogType.CF
+
+for i, e in enumerate(MATCH_DIC.keys()):
+    print(f'{i}:{e}')
+# 0:YalogType.OSF
+# 1:YalogType.CF
+
+print('\nenumerate(MATCH_DIC.values()) ==>')
+for i, e in enumerate(MATCH_DIC.values()):
+    print(f'{i}:{e}')
+# 0:"type":"osf","ext":{"fid":"
+# 1:"type":"cf","ext":{"fid":"
+
+print('\nenumerate(MATCH_DIC.items()) ==>')
+for k, v in MATCH_DIC.items():
+    print(f'{k}:{v}')
+# YalogType.OSF:"type":"osf","ext":{"fid":"
+# YalogType.CF:"type":"cf","ext":{"fid":"
+```
 
 
 
