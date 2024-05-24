@@ -12,6 +12,12 @@
 
 [Python输出颜色](https://www.cnblogs.com/huchong/p/7516712.html)
 
+[Python Sort](https://docs.python.org/3/howto/sorting.html)
+
+[Python Logging](https://docs.python.org/zh-cn/3/library/logging.html)
+
+[Python 工作目录问题](https://medium.com/@pengbinchao/pycharm%E8%BF%90%E8%A1%8Cpy%E4%B9%8B%E8%B7%AF%E5%BE%84%E9%97%AE%E9%A2%98ref%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93%E4%B8%80-%E8%BF%90%E8%A1%8C%E6%96%B9%E5%BC%8F%E5%92%8Cpycharm%E7%AA%97%E5%8F%A3%E4%BA%8C-%E5%B7%A5%E4%BD%9C%E7%9B%AE%E5%BD%95wdir%E5%92%8C%E7%B3%BB%E7%BB%9F%E8%B7%AF%E5%BE%84sys-path%E4%B8%89-%E6%A8%A1%E5%9D%97-%E5%8C%85-%E6%96%87%E4%BB%B6%E5%A4%B9-%E7%9B%AE%E5%BD%95-%E7%9A%84%E5%8C%BA%E5%88%AB-257498417e6d)
+
 # 1. 基础
 
 ## Python
