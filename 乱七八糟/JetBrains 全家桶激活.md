@@ -6,6 +6,8 @@
 
 ## 2. 下载zip 解压
 
+ [Jetbrains破解文件](..\.Assets\Jetbrains破解文件) 
+
 - 这里直接到scripts文件夹中执行这两个脚本就好了
   - uninstall-all-users.vbs
   - install-all-users.vbs
