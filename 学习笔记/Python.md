@@ -18,6 +18,55 @@
 
 [Python 工作目录问题](https://medium.com/@pengbinchao/pycharm%E8%BF%90%E8%A1%8Cpy%E4%B9%8B%E8%B7%AF%E5%BE%84%E9%97%AE%E9%A2%98ref%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93%E4%B8%80-%E8%BF%90%E8%A1%8C%E6%96%B9%E5%BC%8F%E5%92%8Cpycharm%E7%AA%97%E5%8F%A3%E4%BA%8C-%E5%B7%A5%E4%BD%9C%E7%9B%AE%E5%BD%95wdir%E5%92%8C%E7%B3%BB%E7%BB%9F%E8%B7%AF%E5%BE%84sys-path%E4%B8%89-%E6%A8%A1%E5%9D%97-%E5%8C%85-%E6%96%87%E4%BB%B6%E5%A4%B9-%E7%9B%AE%E5%BD%95-%E7%9A%84%E5%8C%BA%E5%88%AB-257498417e6d)
 
+[Python 迷你格式化输出](https://docs.python.org/zh-cn/3/library/string.html#formatspec)
+
+
+
+`Java` 通过`JSONObject`嵌套输出的`Json`字符串没办法由`python` 直接解析
+
+```java
+JSONObject jsonObject = new JSONObject();
+long start = System.nanoTime();
+jsonObject.put("type", "old")
+        .put("duration", System.nanoTime()- start)
+        .put("meta", jsonObject.toString());
+System.out.println(jsonObject);
+
+// ---- output
+{"duration":11791,"meta":"{\"duration\":11791,\"type\":\"old\"}","type":"old"}
+```
+
+`Python`的`json` 包直接解析会报错，主要是因为没办法处理嵌套的`meta`字段的`"{`和`}"`
+
+```python
+print(json.loads('{"duration":11791,"meta":"{\"duration\":11791,\"type\":\"old\"}","type":"old"}'))
+
+# ---- output
+Traceback (most recent call last):
+  File "/Users/dongzf/projects/PycharmProjects/pythonProject/adb/test.py", line 78, in <module>
+    json.loads(line)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 29 (char 28)
+```
+
+一般的可以对`json` 字符串做替换处理
+
+```python
+print(json.loads('{"duration":11791,"meta":"{\"duration\":11791,\"type\":\"old\"}","type":"old"}'
+                 .replace('"{', "{")
+                 .replace('}"', '}')))
+```
+
+
+
 # 1. 基础
 
 ## Python
