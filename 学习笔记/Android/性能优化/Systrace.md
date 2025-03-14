@@ -1,0 +1,1 @@
+[Android Systrace 基础知识 -- Systrace 简介](https://www.androidperformance.com/2019/05/28/Android-Systrace-About/)

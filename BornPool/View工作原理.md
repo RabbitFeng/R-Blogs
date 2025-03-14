@@ -35,7 +35,7 @@ try{
 }
 ```
 
-`View`绘制流程从`ViewRoot#performTraversals()`方法开始。经过`measure`、`layout`、`draw`三个国车过你最终将`View`绘制出来。
+`View`绘制流程从`ViewRoot#performTraversals()`方法开始。经过`measure`、`layout`、`draw`三个过程最终将`View`绘制出来。
 
 > `measure`：测量`View`的宽高；
 >

@@ -30,10 +30,6 @@ Android 调试桥 (`adb`) 是一种功能多样的命令行工具，可让您与
 
 服务器与所有设备均建立连接后，您便可以使用 `adb` 命令访问这些设备。由于服务器管理与设备的连接，并处理来自多个 `adb` 客户端的命令，因此您可以从任意客户端或从某个脚本控制任意设备。
 
-
-
-
-
 ## 启用详细日志记录功能
 
 [Firebase Analytics](https://firebase.google.cn/docs/analytics/events?hl=zh-cn&platform=android)
@@ -49,6 +45,16 @@ adb logcat -v time -s FA FA-SVC
 [Android Developers命令行工具](https://developer.android.com/tools/adb?hl=zh-cn#shellcommands)
 
 
+
+## 获取屏幕控件及布局
+
+```bash
+adb shell uiautomator dump /sdcard/window_dump.xml
+```
+
+
+
+https://blog.51cto.com/u_16213459/13137848
 
 
 
