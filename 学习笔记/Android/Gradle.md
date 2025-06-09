@@ -12,7 +12,11 @@ https://docs.gradle.org/current/userguide/gradle_basics.html
 
 
 
+版本管理 Version Catalogs
 
+https://docs.gradle.org/current/userguide/version_catalogs.html
+
+虽然版本目录定义了版本，但它们不会影响依赖项解析过程。由于依赖项图冲突或通过平台或依赖项管理 API 施加的限制，Gradle 仍可能会选择不同的版本。
 
 
 

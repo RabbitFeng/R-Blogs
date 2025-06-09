@@ -34,7 +34,7 @@ Android 调试桥 (`adb`) 是一种功能多样的命令行工具，可让您与
 
 [Firebase Analytics](https://firebase.google.cn/docs/analytics/events?hl=zh-cn&platform=android)
 
-```
+```bash
 adb shell setprop log.tag.FA VERBOSE
 adb shell setprop log.tag.FA-SVC VERBOSE
 adb logcat -v time -s FA FA-SVC
@@ -43,8 +43,6 @@ adb logcat -v time -s FA FA-SVC
 
 
 [Android Developers命令行工具](https://developer.android.com/tools/adb?hl=zh-cn#shellcommands)
-
-
 
 ## 获取屏幕控件及布局
 
@@ -56,7 +54,14 @@ adb shell uiautomator dump /sdcard/window_dump.xml
 
 https://blog.51cto.com/u_16213459/13137848
 
+## 设置要调试的应用package
+
+```bash
+set-debug-app [-w] [--persistent] package
+-w: 应用启动时等待调试程序
+-persistent: 保留此值(不使用该值就是单次调试)
 
 
-
+adb shell am clear-debug-app
+```
 
