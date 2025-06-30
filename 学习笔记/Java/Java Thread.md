@@ -1,25 +1,47 @@
-## Thread
+# Thread
 
-> TODO
->
-> 
+## 1.1 Thread类结构
 
-Thread类结构
+### 类声明
 
-- `Thread` 实现了`Runnable` 接口；内部持有一个`Runnable` 对象；
+`Thread`类实现`Runnable`接口，内部持有`Runnable`对象；
 
-```
+```java
 public
 class Thread implements Runnable {
-      private Runnable target;
-      
-     	private 
+  	private Runnable target;
+  
+    @Override
+    public void run() {
+        if (target != null) {
+            target.run();
+        }
+    }
+}
+```
+
+### 构造方法
+
+```java
+/**
+ * Allocates a new {@code Thread} object. This constructor has the same
+ * effect as {@linkplain #Thread(ThreadGroup,Runnable,String) Thread}
+ * {@code (null, null, gname)}, where {@code gname} is a newly generated
+ * name. Automatically generated names are of the form
+ * {@code "Thread-"+}<i>n</i>, where <i>n</i> is an integer.
+ */
+public Thread() {
+    init(null, null, "Thread-" + nextThreadNum(), 0);
 }
 ```
 
 
 
-## 线程中的异常处理
+
+
+
+
+## 1.2 异常处理
 
 **Java**
 
@@ -61,39 +83,7 @@ private void dispatchUncaughtException(Throwable e) {
 
 线程中异常的处理流程
 
-发散：
-
-- 一般情况下我们不会直接直接创建线程，而是使用线程池；
-
-- 线程池的设计：
-
-  - **产品**：侧重完整解决方案；监控、治理
-
-    - 产品包含多条业务，每个业务都可能会维护自己的一套线程池；三方SDK也会存在线程池；
-
-    https://tech.qimao.com/xian-cheng-shu-liang-you-hua/
-
-    https://juejin.cn/post/6850037281621803015
-
-  - **业务使用**：`Executors`；三方框架的线程池设计；
-
-  - **技术原理**：从Thread入手 从0～1来设计线程池 ==> ThreadPoolExecutor的设计原理
-
-    - 线程管理 核心线程+最大线程；核心线程销毁；阻塞队列
-
-  - 都要从`java.util.concurrent`的角度出发
-
-- 异常处理
-
-- corePool Size
-
-  - 怎么取
-
-- 开源框架中是怎么设计的线程池
-
-  - Glide
-  - RxJava
-  - OkHttp
+- 
 
 ## 查看app进程的cpu数量
 
@@ -115,11 +105,11 @@ $adb shell ps -T | grep <pid> | wc -l
 
 ### 2. Android Studio CPU Prifiler
 
-有点卡。。。不说了
+使用时很卡，不关注了。。。
 
 
 
-## 守护线程
+## 1.3 守护线程
 
 ### **JVM 程序在什么情况下能够正常退出？**
 
@@ -147,7 +137,7 @@ $adb shell ps -T | grep <pid> | wc -l
 
 - 当有普通线程运行时JVM不会退出；
 
-### **Sample1: 创建非守护线程**
+**Sample1: 创建非守护线程**
 
 ```java
 public class MainEntrance {
@@ -190,7 +180,7 @@ public class MainEntrance {
 ...
 ```
 
-### **Sample2: 创建守护线程**
+**Sample2: 创建守护线程**
 
 ```java
 public class MainEntrance {
@@ -236,3 +226,66 @@ JVM退出！
 
 正常业务逻辑可能不会涉及到；一个经典的守护线程实例就是**垃圾回收线程**
 
+
+
+# 线程池
+
+[Java Guide Java 线程池详情](https://javaguide.cn/java/concurrent/java-thread-pool-summary.html#executor-%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D)
+
+Java 提供的线程池实现
+
+线程池就是管理一系列线程的资源池，其提供了一种限制和管理线程资源的方式。每个线程池还维护一些基本统计信息，例如已完成任务的数量。池化技术的思想主要是为了减少每次获取资源的消耗，提高对资源的利用率。
+
+- **降低资源消耗**。通过重复利用已创建的线程降低线程创建和销毁造成的消耗。
+
+- **提高响应速度**。当任务到达时，任务可以不需要等到线程创建就能立即执行。
+
+- **提高线程的可管理性**。线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。
+
+## `Executor` 框架
+
+`Executor` 框架是 Java5 之后引进的，在 Java 5 之后，通过 `Executor` 来启动线程比使用 `Thread` 的 `start` 方法更好，除了更易管理，效率更好（用线程池实现，节约开销）外，还有关键的一点：有助于避免 this 逃逸问题。
+
+![img](https://oss.javaguide.cn/github/javaguide/java/concurrent/executor-class-diagram.png)
+
+`Executor` 框架不仅包括了线程池的管理，还提供了线程工厂、队列以及拒绝策略等，`Executor` 框架让并发编程变得更加简单。
+
+具体要关注的类是`ThreadPoolExecutor`
+
+
+
+## **发散：**
+
+- 一般情况下我们不会直接直接创建线程，而是使用线程池；
+
+- 线程池的设计：
+
+  - **产品**：侧重完整解决方案；监控、治理
+
+    - 产品包含多条业务，每个业务都可能会维护自己的一套线程池；三方SDK也会存在线程池；
+
+    https://tech.qimao.com/xian-cheng-shu-liang-you-hua/
+
+    https://juejin.cn/post/6850037281621803015
+
+  - **业务使用**：`Executors`；三方框架的线程池设计；
+
+  - **技术原理**：从Thread入手 从0～1来设计线程池 ==> ThreadPoolExecutor的设计原理
+
+    - 线程管理 核心线程+最大线程；核心线程销毁；阻塞队列
+
+  - 都要从`java.util.concurrent`的角度出发
+
+- 异常处理
+
+- corePool Size
+
+  - 怎么取
+
+- 开源框架中是怎么设计的线程池
+
+  - Glide
+  - RxJava
+  - OkHttp
+
+- 
