@@ -1,5 +1,7 @@
 # Thread
 
+[Thread-Android Developer](https://developer.android.com/reference/java/lang/Thread#Thread())
+
 ## 1.1 Thread类结构
 
 ### 类声明
@@ -22,22 +24,127 @@ class Thread implements Runnable {
 
 ### 构造方法
 
+`Thread`构造方法最后都会执行`init`
+
 ```java
-/**
- * Allocates a new {@code Thread} object. This constructor has the same
- * effect as {@linkplain #Thread(ThreadGroup,Runnable,String) Thread}
- * {@code (null, null, gname)}, where {@code gname} is a newly generated
- * name. Automatically generated names are of the form
- * {@code "Thread-"+}<i>n</i>, where <i>n</i> is an integer.
- */
-public Thread() {
-    init(null, null, "Thread-" + nextThreadNum(), 0);
-}
+ 
+    public Thread() {
+        init(null, null, "Thread-" + nextThreadNum(), 0);
+    }
+
+    public Thread(Runnable target) {
+        init(null, target, "Thread-" + nextThreadNum(), 0);
+    }
+
+    Thread(Runnable target, AccessControlContext acc) {
+        init(null, target, "Thread-" + nextThreadNum(), 0, acc, false);
+    }
+
+    public Thread(ThreadGroup group, Runnable target) {
+        init(group, target, "Thread-" + nextThreadNum(), 0);
+    }
+
+    public Thread(String name) {
+        init(null, null, name, 0);
+    }
+
+    public Thread(ThreadGroup group, String name) {
+        init(group, null, name, 0);
+    }
+
+    public Thread(Runnable target, String name) {
+        init(null, target, name, 0);
+    }
+
+    public Thread(ThreadGroup group, Runnable target, String name) {
+        init(group, target, name, 0);
+    }
+
+    public Thread(ThreadGroup group, Runnable target, String name,
+                  long stackSize) {
+        init(group, target, name, stackSize);
+    }
 ```
 
+### ThreadGroup
 
+`ThreadGroup`（线程组）是Java中用于组织线程的一种结构，它提供了对线程的层次化管理。通过线程组，可以将一组线程组织成一个树状结构，方便对线程进行统一控制和管理。
 
+### State
 
+线程的状态，在`Thread`中定义为枚举
+
+```java
+    /**
+     * A thread state.  A thread can be in one of the following states:
+     * @since   1.5
+     * @see #getState
+     */
+    public enum State {
+        /**
+         * Thread state for a thread which has not yet started.
+         */
+        NEW,
+
+        /**
+         * Thread state for a runnable thread.  A thread in the runnable
+         * state is executing in the Java virtual machine but it may
+         * be waiting for other resources from the operating system
+         * such as processor.
+         */
+        RUNNABLE,
+
+        /**
+         * Thread state for a thread blocked waiting for a monitor lock.
+         * A thread in the blocked state is waiting for a monitor lock
+         * to enter a synchronized block/method or
+         * reenter a synchronized block/method after calling
+         * {@link Object#wait() Object.wait}.
+         */
+        BLOCKED,
+
+        /**
+         * Thread state for a waiting thread.
+         * A thread is in the waiting state due to calling one of the
+         * following methods:
+         * <ul>
+         *   <li>{@link Object#wait() Object.wait} with no timeout</li>
+         *   <li>{@link #join() Thread.join} with no timeout</li>
+         *   <li>{@link LockSupport#park() LockSupport.park}</li>
+         * </ul>
+         *
+         * <p>A thread in the waiting state is waiting for another thread to
+         * perform a particular action.
+         *
+         * For example, a thread that has called <tt>Object.wait()</tt>
+         * on an object is waiting for another thread to call
+         * <tt>Object.notify()</tt> or <tt>Object.notifyAll()</tt> on
+         * that object. A thread that has called <tt>Thread.join()</tt>
+         * is waiting for a specified thread to terminate.
+         */
+        WAITING,
+
+        /**
+         * Thread state for a waiting thread with a specified waiting time.
+         * A thread is in the timed waiting state due to calling one of
+         * the following methods with a specified positive waiting time:
+         * <ul>
+         *   <li>{@link #sleep Thread.sleep}</li>
+         *   <li>{@link Object#wait(long) Object.wait} with timeout</li>
+         *   <li>{@link #join(long) Thread.join} with timeout</li>
+         *   <li>{@link LockSupport#parkNanos LockSupport.parkNanos}</li>
+         *   <li>{@link LockSupport#parkUntil LockSupport.parkUntil}</li>
+         * </ul>
+         */
+        TIMED_WAITING,
+
+        /**
+         * Thread state for a terminated thread.
+         * The thread has completed execution.
+         */
+        TERMINATED;
+    }
+```
 
 
 
@@ -79,13 +186,9 @@ private void dispatchUncaughtException(Throwable e) {
 
 ![image-20250529174551454](https://raw.githubusercontent.com/RabbitFeng/TyporaPic/master/images/image-20250529174551454.png)
 
-在自己的业务里，肯定要避免直接通过`Thread.setDefaultUncaughtExceptionHandler`来处理崩溃问题，
+在自己的业务里，避免直接通过`Thread.setDefaultUncaughtExceptionHandler`来处理崩溃问题，
 
-线程中异常的处理流程
-
-- 
-
-## 查看app进程的cpu数量
+### 查看app进程的cpu数量
 
 ### 1. adb shell
 
@@ -226,11 +329,96 @@ JVM退出！
 
 正常业务逻辑可能不会涉及到；一个经典的守护线程实例就是**垃圾回收线程**
 
+## 1.4 生命周期/底层原理
+
+涉及创建、调度和状态管理
+
+### 线程创建
+
+Java中创建线程的两种方式：继承Thread类或实现Runnable接口；最终都会调用操作系统提供的线程创建接口；
+
+线程创建后Thread类会进入`init`方法对`Thread` 做初始化；`init`方法对参数有：线程组、线程名、runnable对象等
+
+```java
+    /**
+     * Initializes a Thread.
+     *
+     * @param g the Thread group
+     * @param target the object whose run() method gets called
+     * @param name the name of the new Thread
+     * @param stackSize the desired stack size for the new thread, or
+     *        zero to indicate that this parameter is to be ignored.
+     * @param acc the AccessControlContext to inherit, or
+     *            AccessController.getContext() if null
+     * @param inheritThreadLocals if {@code true}, inherit initial values for
+     *            inheritable thread-locals from the constructing thread
+     */
+    private void init(ThreadGroup g, Runnable target, String name,
+                      long stackSize, AccessControlContext acc,
+                      boolean inheritThreadLocals) {
+      	// 线程名不为空，如果没有指定线程名，会有全局自增id来生成 Thread-123
+        if (name == null) {
+            throw new NullPointerException("name cannot be null");
+        }
+      
+      	//
+    }      
+```
 
 
-# 线程池
+
+### native方法
+
+#### `registerNatives()`
+
+类加载时静态方法
+
+```java
+public
+class Thread implements Runnable {
+    /* Make sure registerNatives is the first thing <clinit> does. */
+    private static native void registerNatives();
+    static {
+        registerNatives();
+    }
+  
+  	// ...
+}
+```
+
+
+
+# 并发技术
+
+[Object - Java 8](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html)
+
+## 线程并发
+
+### synchronized
+
+
+
+### wait()/notify()/notifyAll()
+
+```tex
+This method should only be called by a thread that is the owner of this object's monitor. A thread becomes the owner of the object's monitor in one of three ways:
+
+By executing a synchronized instance method of that object.
+By executing the body of a synchronized statement that synchronizes on the object.
+For objects of type Class, by executing a synchronized static method of that class.
+```
+
+
+
+### 对象头/monitor
+
+[对象头](https://www.cnblogs.com/hongdada/p/14087177.html)
+
+## 线程池
 
 [Java Guide Java 线程池详情](https://javaguide.cn/java/concurrent/java-thread-pool-summary.html#executor-%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D)
+
+[Java Guid Java 线程池最佳实践](https://javaguide.cn/java/concurrent/java-thread-pool-best-practices.html)
 
 Java 提供的线程池实现
 
@@ -242,7 +430,7 @@ Java 提供的线程池实现
 
 - **提高线程的可管理性**。线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。
 
-## `Executor` 框架
+### `Executor` 框架
 
 `Executor` 框架是 Java5 之后引进的，在 Java 5 之后，通过 `Executor` 来启动线程比使用 `Thread` 的 `start` 方法更好，除了更易管理，效率更好（用线程池实现，节约开销）外，还有关键的一点：有助于避免 this 逃逸问题。
 
@@ -250,7 +438,54 @@ Java 提供的线程池实现
 
 `Executor` 框架不仅包括了线程池的管理，还提供了线程工厂、队列以及拒绝策略等，`Executor` 框架让并发编程变得更加简单。
 
-具体要关注的类是`ThreadPoolExecutor`
+具体要关注的类是`ThreadPoolExecutor`，另外一种是``ScheduledThreadPoolExecutor` 
+
+
+
+### 线程池参数
+
+```java
+    /**
+     * 用给定的初始参数创建一个新的ThreadPoolExecutor。
+     */
+    public ThreadPoolExecutor(int corePoolSize,//线程池的核心线程数量
+                              int maximumPoolSize,//线程池的最大线程数
+                              long keepAliveTime,//当线程数大于核心线程数时，多余的空闲线程存活的最长时间
+                              TimeUnit unit,//时间单位
+                              BlockingQueue<Runnable> workQueue,//任务队列，用来储存等待执行任务的队列
+                              ThreadFactory threadFactory,//线程工厂，用来创建线程，一般默认即可
+                              RejectedExecutionHandler handler//拒绝策略，当提交的任务过多而不能及时处理时，我们可以定制策略来处理任务
+                               ) {
+        if (corePoolSize < 0 ||
+            maximumPoolSize <= 0 ||
+            maximumPoolSize < corePoolSize ||
+            keepAliveTime < 0)
+            throw new IllegalArgumentException();
+        if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+```
+
+
+
+`ThreadPoolExecutor` 3 个最重要的参数：
+
+- `corePoolSize` : 核心线程数，任务队列未达到队列容量时，最大可以同时运行的线程数量。
+- `maximumPoolSize` : 任务队列中存放的任务达到队列容量的时候，当前可以同时运行的线程数量变为最大线程数。
+- `workQueue`: 新任务来的时候会先判断当前运行的线程数量是否达到核心线程数，如果达到的话，新任务就会被存放在队列中。
+
+`ThreadPoolExecutor`其他常见参数 :
+
+- `keepAliveTime`:线程池中的线程数量大于 `corePoolSize` 的时候，如果这时没有新的任务提交，核心线程外的线程不会立即销毁，而是会等待，直到等待的时间超过了 `keepAliveTime`才会被回收销毁。
+- `unit` : `keepAliveTime` 参数的时间单位。
+- `threadFactory` :executor 创建新线程的时候会用到。
+- `handler` :拒绝策略（后面会单独详细介绍一下）
 
 
 
@@ -288,4 +523,16 @@ Java 提供的线程池实现
   - RxJava
   - OkHttp
 
-- 
+线程池设计优化
+
+-  `Executors.newSingleThreadExecutor`方法创建的线程池优化
+- `ScheduleThreadPool`中运行的任务如果抛出异常是catch不到的。即便是配置`setUncaughtExceptionHandler`。根本原因是提交到该线程池的`Runnable`会被做一层`FutureTask`封装。
+
+
+
+注意：
+
+- 有界队列设置队列容量，否则有可能OOM
+- ThreadLocal
+  - 脏数据
+

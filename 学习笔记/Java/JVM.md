@@ -1,0 +1,1 @@
+[JVM Oracle](https://docs.oracle.com/en/java/javase/24/vm/java-virtual-machine-technology-overview.html#GUID-3BB4C26F-6DE7-4299-9329-A3E02620D50A)

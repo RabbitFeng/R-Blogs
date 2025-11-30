@@ -65,3 +65,42 @@ set-debug-app [-w] [--persistent] package
 adb shell am clear-debug-app
 ```
 
+
+
+## 文件推送
+
+```
+adb push local remote
+```
+
+但是如果想把文件直接推送到应用内部存储目录，如: `/data/data/<package>`, 会提示`Permission denied` 。但可以使用`Android Studio` 的`Device Explorer`做到文件上传。
+
+要想了解`Android Studio`做了什么，可以从它的日志文件着手：`Help->Show Log in Finder`。打开`idea.log`文件：
+
+```
+2025-10-15 16:42:51,716 [ 556913]   INFO - #com.android.tools.idea.adb.AdbShellCommandsUtil - Command took 60.63 ms to execute: run-as com.baidu.searchbox sh -c 'cp /data/local/tmp/tempd963c4c7-72b9-455b-8989-b01d79a23bbb /data/data/com.baidu.searchbox/a.txt'
+```
+
+嗷～～～是用了一个 run-as 到命令，将本地文件``push`到一个`/data/local/tmp` 目录，然后通过`run-as` +`cp`指令完成将文件拷贝入应用内部存储目录中的；
+
+总结一下，`Android Studio`之所以能将文件直接推送到应用内部存储目录，首先是将文件推送到有权限的`/data/local/tmp`目录下，再通过`run-as`的方式将文件拷贝到指定位置。
+
+### 文件推送到应用内部存储目录
+
+``` bash
+# 1.1 创建临时文件夹
+adb shell "rm -r /data/local/tmp/mine-tmp"
+adb shell "mkdir /data/local/tmp/mine-tmp"
+# 1.2 本地文件push到 mine-tmp
+adb push <local file> /data/local/tmp/mine-tmp/
+# 1.3 提权（当前目录不需要，如果导入sdcard,可能需要改命令提权）
+# adb shell 'chmod 777 /data/local/tmp/mine-tmp/abjson'
+
+# 2.1 如果目标文件夹尚不存在则创建
+adb shell "run-as com.baidu.searchbox sh -c 'mkdir /data/data/com.baidu.searchbox/target'"
+# 2.2 把临时文件夹拷贝到应用专属文件目录(内部存储目录)
+adb shell "run-as com.baidu.searchbox sh -c 'cp -rf /data/local/tmp/mine-tmp/* /data/data/com.baidu.searchbox/target'"
+```
+
+
+
