@@ -145,11 +145,11 @@ class Test {
             if (!a) {
                 throw new RuntimeException("test throw");
             }
-        if (b) {
-            Trace.endSection();
-            return;
-        }
-        Trace.endSection();
+            if (b) {
+                Trace.endSection();
+                return;
+            }
+        		Trace.endSection();
         } catch(throwable e) {
             Trace.endSection();
             throw e;
@@ -208,7 +208,4 @@ Systrace插件实现是在App的Application attachBaseContext中，通过ASM动�
 
 ![img](https://ku.baidu-int.com/wiki/attach/image/api/imageDownloadAddress?attachId=257c4d835c204c6f8bad64a37bf4b732&docGuid=XoQc760mC7bM3u)
 
-
-
-字节Btrace
 

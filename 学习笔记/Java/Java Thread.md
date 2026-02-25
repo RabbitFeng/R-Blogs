@@ -440,8 +440,6 @@ Java 提供的线程池实现
 
 具体要关注的类是`ThreadPoolExecutor`，另外一种是``ScheduledThreadPoolExecutor` 
 
-
-
 ### 线程池参数
 
 ```java
@@ -486,6 +484,72 @@ Java 提供的线程池实现
 - `unit` : `keepAliveTime` 参数的时间单位。
 - `threadFactory` :executor 创建新线程的时候会用到。
 - `handler` :拒绝策略（后面会单独详细介绍一下）
+
+### **线程池的基本设计**
+
+- `ctl`变量，`AtomicInteger`，低28位记录workerCount, 高3位(除符号位)记录线程池状态
+
+### 线程池execute()工作流程
+
+1. 
+
+
+
+### 怎么关闭线程池
+
+安全关闭 Java 线程池的最佳实践是：**优先使用 `shutdown()` 配合 `awaitTermination()`**。首先调用 `shutdown()` 停止接收新任务并处理队列任务；接着调用 `awaitTermination()` 设置合理超时时间阻塞等待任务完成；若超时未完成，则调用 `shutdownNow()` 强制停止并处理返回的任务列表。 
+
+#### 1. 核心方法对比
+
+线程池提供了两个主要的关闭入口：
+
+- **`shutdown()`（温和派）：**
+  - **行为：** 拒绝新任务，但会等待排队中的任务和正在执行的任务全部完成。
+  - **状态：** 线程池进入 `SHUTDOWN` 状态。
+- **`shutdownNow()`（强硬派）：**
+  - **行为：** 尝试停止正在执行的任务（通过 `Thread.interrupt()`），并丢弃队列中尚未执行的任务。
+  - **返回：** 它会返回一个 `List<Runnable>`，包含那些被丢弃在队列里的任务，方便你做补偿处理。
+
+#### 2. 代码示例
+
+```
+  public static List<Runnable> safeShutDown(@NotNull ExecutorService pool, int timeout, TimeUnit timeUnit) {
+      // 1. 停止接收新任务
+      pool.shutdown();
+      try {
+          // 2. 等待一段时间看是否能够执行完成
+          if (!pool.awaitTermination(timeout, timeUnit)) {
+              return pool.shutdownNow();
+          }
+      } catch (InterruptedException ie) {
+          pool.shutdownNow();
+      }
+      return EMPTY;
+  }
+```
+
+#### 3.关键点
+
+**1. 任务必须响应“中断”**
+
+`shutdownNow()` 靠的是发送中断信号。如果你的任务里写了死循环或者没有处理 `InterruptedException`，它是关不掉的。
+
+- **做法：** 在长耗时循环中检查 `Thread.currentThread().isInterrupted()`。
+
+**2. 处理未执行的任务**
+
+如果你不希望任务无故消失，调用 `shutdownNow()` 时要接住返回值：
+
+```
+List<Runnable> droppedTasks = executor.shutdownNow();
+// 将 droppedTasks 保存到本地数据库或重新调度
+```
+
+#### 3. 防止提交后关闭
+
+一旦调用了``shutdown()`，再调用`execute()` 会抛出`RejectedExecutionException`
+
+- 调用前检查``executor.isShutdown()`，或者自定义`RejectedExcutionHandler`处理溢出的任务。
 
 
 
@@ -536,3 +600,57 @@ Java 提供的线程池实现
 - ThreadLocal
   - 脏数据
 
+
+
+# App中往往各个业务都有自己的线程池实现，怎么处理
+
+在 2026 年的 Android 高性能开发中，一个 App 进程内出现几百个线程被称为**“****线程膨胀****”（Thread Proliferation）**。这会导致严重的内存压力（每个线程默认占用 1MB 栈内存）、频繁的上下文切换以及调试困难。
+
+针对业务线繁多导致的线程乱象，主流的解决策略如下：
+
+## **建立统一的“公共线程池调度器”**
+
+严禁各业务方私自通过 `new Thread()` 或 `Executors.newFixedThreadPool()` 创建线程池。
+
+- **统一中台化**：由架构组提供一个全局的 **线程中台 (Thread Infrastructure)**。
+- **逻辑隔离而非物理隔离**：所有业务共用底层的几个物理线程池（如 CPU 池、IO 池），但在上层通过 **`CoroutineDispatcher` (协程)** 或自定义的 **`SerialExecutor` (串行执行器)** 进行逻辑上的任务隔离。
+
+## 全面转向 Kotlin 协程 (Coroutines)
+
+这是目前解决多线程混乱的最优解。
+
+- **轻量化**：协程运行在用户态，上千个协程可能只对应底层 3-5 个物理线程。
+- **调度收敛**：强制业务方使用官方提供的调度器：
+  - `Dispatchers.IO`：用于网络和磁盘。
+  - `Dispatchers.Default`：用于计算密集型任务。
+- **优势**：即使有 100 个业务线在并发，它们最终都会在这些收敛后的公共线程池中排队，避免了物理线程数激增。
+
+## 使用线程池监控与拦截工具
+
+在开发阶段，通过字节码插桩（Transform / ASM）技术治理线程：
+
+- **插桩拦截**：在编译期拦截所有 `new Thread()` 和 `ThreadPoolExecutor` 的构造函数。
+- **强制更名**：为所有创建的线程强制加上业务前缀（如 `Plugin_Pay_Thread-1`），方便在 Profiler 中快速定位是谁在滥用。
+- **异常告警**：当进程内线程数超过阈值（如 150 个）时，上报告警日志。
+- 引入动态线程池管理 (Dynamic TP)
+
+通过云端配置动态管理各业务池参数：
+
+- **空闲回收**：缩短 `keepAliveTime`（如从 60s 缩短至 5s），让不活跃的插件线程快速释放。
+- **按需限制**：在 App 处于后台或极低内存（Low Memory）时，通过云端指令动态调小所有公共线程池的最大线程数。
+- 针对插件化架构的特殊处理
+
+如果你在用 Shadow 或 RePlugin 运行插件：
+
+- **宿主注入**：宿主 App 将自己的 `Executor` 注入到插件中。
+- **接口标准化**：插件内部不准创建线程池，必须通过宿主提供的 `IThreadService` 接口申请任务执行。
+
+总结方案：
+
+| 措施         | 目标                                          |
+| :----------- | :-------------------------------------------- |
+| **协程化**   | 将几百个物理线程坍缩为几十个，降低内存占用。  |
+| **中台化**   | 废除业务私有池，收敛至 `Global IO/CPU Pool`。 |
+| **治理工具** | 监控谁在乱开线程，通过字节码手段“强行收编”。  |
+
+**建议操作**：优先将项目中散落在各处的线程池通过 **Kotlin Dispatchers** 进行重构，这是 2026 年 Android 开发的工业标准。
